@@ -1,24 +1,25 @@
-This is free and unencumbered software released into the public domain.
 
-Anyone is free to copy, modify, publish, use, compile, sell, or
-distribute this software, either in source code form or as a compiled
-binary, for any purpose, commercial or non-commercial, and by any
-means.
+### **4. `LICENSE` File**
 
-In jurisdictions that recognize copyright laws, the author or authors
-of this software dedicate any and all copyright interest in the
-software to the public domain. We make this dedication for the benefit
-of the public at large and to the detriment of our heirs and
-successors. We intend this dedication to be an overt act of
-relinquishment in perpetuity of all present and future rights to this
-software under copyright law.
+Choose an open-source license (e.g., MIT, Apache 2.0, GPL). Create a `LICENSE` file at the root of your repository with the text of the chosen license. The MIT License is a popular and permissive choice.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-OTHER DEALINGS IN THE SOFTWARE.
+### **5. Publishing to GitHub Marketplace**
 
-For more information, please refer to <https://unlicense.org>
+Once you have your `action.yml`, `README.md`, and `LICENSE` in your public repository:
+
+1.  **Commit and Push:** Push all these files to your `main` branch.
+2.  **Create a Release:**
+    * Go to your action's repository on GitHub.
+    * Click on the **"Releases"** tab (often found on the right sidebar or under the "Code" tab).
+    * Click **"Create a new release"** (or "Draft a new release").
+    * **Choose a new tag:** This is your action's version. Use Semantic Versioning (e.g., `v1.0.0`, `v1`). For the first release, `v1` is a good start.
+    * **Release title:** A descriptive title for this version (e.g., "Initial Release of File Archiver").
+    * **Description:** Briefly summarize the changes in this version.
+    * **Crucially:** Below the description box, you will see a checkbox: **"Publish this Action to the GitHub Marketplace."** Check this box.
+        * *First-time Publishers:* You might be prompted to accept the GitHub Marketplace Developer Agreement if you haven't already.
+    * **Select Categories:** Choose primary and optional secondary categories that best describe your action (e.g., "Utilities," "Deployment").
+    * Click **"Publish release."**
+
+After publishing, your action will appear in the GitHub Marketplace, and other users can discover and use it in their workflows! Remember to update your action's version tag (e.g., `v2`, `v3`) and create a new release whenever you make significant changes or add new features.
+
+
