@@ -1,0 +1,38 @@
+name: Deploy from Zip
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployment.zip' # Trigger when deployment.zip is pushed
+
+  workflow_dispatch:
+    inputs:
+      zip_to_deploy:
+        description: 'Path to the deployment zip file'
+        required: true
+        default: 'deployment.zip'
+
+jobs:
+  unzip_deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Unzip deployment package
+        uses: your-username/file-archiver-action@v1 # Replace with your repo name and version
+        with:
+          operation: 'unzip'
+          archive_path: ${{ github.event.inputs.zip_to_deploy || 'deployment.zip' }}
+          destination_path: 'public'
+          overwrite_existing: 'true'
+          commit_changes: 'true'
+          commit_message: 'Action: Deployed new version from zip'
+        id: unzip_step # Assign an ID to access outputs
+
+      - name: Verify unzipped files
+        run: |
+          echo "Unzipped ${{ steps.unzip_step.outputs.unzipped_files_count }} files."
+          ls -la public/
