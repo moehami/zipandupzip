@@ -1,0 +1,128 @@
+# action.yml
+name: 'File Archiver'
+description: 'A GitHub Action to compress files/directories into a zip archive or uncompress a zip archive.'
+author: 'moehami' # Replace with your GitHub username
+
+branding:
+  icon: 'archive' # You can choose an Octicons icon (https://primer.style/octicons/)
+  color: 'yellow-dark'   # Pick a color: white, yellow, blue, green, red, purple, orange, gray-dark
+
+inputs:
+  operation:
+    description: 'The operation to perform: "zip" to compress, or "unzip" to decompress.'
+    required: true
+    default: 'unzip' # Default to unzip for common use cases
+  
+  archive_path:
+    description: 'For "zip": The desired path and filename for the output zip archive (e.g., "my_project.zip"). For "unzip": The path to the zip file to be extracted.'
+    required: true
+
+  source_path:
+    description: 'For "zip" operation: The file or directory path to compress. Can be relative to the repository root. Not used for "unzip".'
+    required: false
+
+  destination_path:
+    description: 'For "unzip" operation: The directory where the archive contents will be extracted. Defaults to the current directory if not specified. Not used for "zip".'
+    required: false
+    default: '.' # Extract to current directory by default
+
+  overwrite_existing:
+    description: 'For "unzip" operation: Set to "true" to overwrite existing files without prompting. Defaults to "false".'
+    required: false
+    default: 'false'
+
+  commit_changes:
+    description: 'Set to "true" to automatically commit the changes (new archive or unzipped files) back to the repository. Only recommended for specific automation scenarios.'
+    required: false
+    default: 'false'
+
+  commit_message:
+    description: 'Custom commit message if commit_changes is "true".'
+    required: false
+    default: 'Action: File Archiver changes'
+
+outputs:
+  output_archive_path:
+    description: 'The full path to the created zip archive (for "zip" operation).'
+    value: ${{ steps.perform_operation.outputs.ARCHIVE_PATH }}
+  
+  unzipped_files_count:
+    description: 'The number of files unzipped (for "unzip" operation, approximate).'
+    value: ${{ steps.perform_operation.outputs.UNZIPPED_COUNT }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Git user for commit (if enabled)
+      if: inputs.commit_changes == 'true'
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+
+    - name: Perform File Operation
+      id: perform_operation
+      shell: bash
+      run: |
+        OPERATION="${{ inputs.operation }}"
+        ARCHIVE_PATH="${{ inputs.archive_path }}"
+
+        if [ "$OPERATION" == "zip" ]; then
+          SOURCE_PATH="${{ inputs.source_path }}"
+          if [ -z "$SOURCE_PATH" ]; then
+            echo "Error: 'source_path' is required for the 'zip' operation."
+            exit 1
+          fi
+          
+          if [ ! -e "$SOURCE_PATH" ]; then
+            echo "Error: Source path '$SOURCE_PATH' does not exist."
+            exit 1
+          fi
+
+          echo "Compressing '$SOURCE_PATH' into '$ARCHIVE_PATH'..."
+          zip -r "$ARCHIVE_PATH" "$SOURCE_PATH"
+          echo "ARCHIVE_PATH=$ARCHIVE_PATH" >> $GITHUB_OUTPUT
+          echo "Successfully created '$ARCHIVE_PATH'."
+
+        elif [ "$OPERATION" == "unzip" ]; then
+          DESTINATION_PATH="${{ inputs.destination_path }}"
+          OVERWRITE="${{ inputs.overwrite_existing }}"
+
+          if [ ! -f "$ARCHIVE_PATH" ]; then
+            echo "Error: Archive file '$ARCHIVE_PATH' not found."
+            exit 1
+          fi
+
+          echo "Uncompressing '$ARCHIVE_PATH' to '$DESTINATION_PATH'..."
+          UNZIP_OPTIONS=""
+          if [ "$OVERWRITE" == "true" ]; then
+            UNZIP_OPTIONS="-o" # Overwrite files without prompting
+          fi
+          
+          mkdir -p "$DESTINATION_PATH" # Ensure destination directory exists
+          unzip $UNZIP_OPTIONS "$ARCHIVE_PATH" -d "$DESTINATION_PATH" | tee unzip_output.txt
+          
+          # Count lines containing 'inflating:' or 'creating:' for an approximate file count
+          UNZIPPED_FILES=$(grep -c -E 'inflating:|creating:' unzip_output.txt || true)
+          echo "UNZIPPED_COUNT=$UNZIPPED_FILES" >> $GITHUB_OUTPUT
+          echo "Successfully uncompressed '$ARCHIVE_PATH'."
+          rm -f unzip_output.txt # Clean up temporary file
+
+        else
+          echo "Error: Invalid operation specified. Must be 'zip' or 'unzip'."
+          exit 1
+        fi
+
+    - name: Commit Changes (if enabled)
+      if: inputs.commit_changes == 'true'
+      shell: bash
+      run: |
+        git add .
+        # Check if there are actual changes before committing
+        if git diff --cached --quiet; then
+          echo "No changes to commit."
+        else
+          git commit -m "${{ inputs.commit_message }}"
+          git push origin HEAD # Push to the current branch
+          echo "Changes committed and pushed."
+        fi
